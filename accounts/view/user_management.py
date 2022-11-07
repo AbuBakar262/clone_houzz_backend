@@ -1,5 +1,4 @@
-from rest_framework import status, permissions, pagination, viewsets
-from rest_framework.response import Response
+from import_modules import *
 from accounts.models import User
 from accounts.serializers import SignupSerializer, UserListSerializer, UpdateDeleteProSerializer, LoginSerializer, \
     UpdateDeleteClientSerializer
@@ -124,18 +123,16 @@ class ProUserListView(viewsets.ModelViewSet):
         View for getting Professional User List
     """
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-    serializer_class = UserListSerializer
-    queryset = User.objects.filter(role='Professional')
     pagination_class = DynamicPagination
 
     def pro_user_list(self, request):
         try:
-            serializer = self.serializer_class(self.get_queryset(), many=True)
-            return Response({
-                "success": True,
-                "message": "Professional User Listed Successfully",
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
+            queryset = User.objects.filter(role='Professional')
+            paginator = PageNumberPagination()
+            paginator.page_size = 10
+            result_page = paginator.paginate_queryset(queryset, request)
+            serializer = UserListSerializer(result_page, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as e:
             return Response({
                 "success": False,
@@ -149,18 +146,16 @@ class ClientUserListView(viewsets.ModelViewSet):
         View for getting Client User List
     """
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-    serializer_class = UserListSerializer
-    queryset = User.objects.filter(role='Client')
     pagination_class = DynamicPagination
 
     def client_user_list(self, request):
         try:
-            serializer = self.serializer_class(self.get_queryset(), many=True)
-            return Response({
-                "success": True,
-                "message": "Client User Listed Successfully",
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
+            queryset = User.objects.filter(role='Client')
+            paginator = PageNumberPagination()
+            paginator.page_size = 10
+            result_page = paginator.paginate_queryset(queryset, request)
+            serializer = UserListSerializer(result_page, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as e:
             return Response({
                 "success": False,

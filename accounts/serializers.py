@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from accounts.models import User
+from accounts.models import User, Projects, Company
 from django.utils.translation import gettext_lazy as _
 
 
@@ -144,3 +144,100 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['password', 'email', 'username']
+
+
+class CreateProjectSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Projects
+        fields = ['title', 'description', 'image', 'location', 'pro_user']
+
+    def validate(self, attrs):
+        if Projects.objects.filter(title=attrs['title']).exists():
+            message = 'Project Already Exist'
+            raise serializers.ValidationError(_(message))
+        if not User.objects.filter(email=attrs['pro_user']).exists():
+            message = 'User Not Exist'
+            raise serializers.ValidationError(_(message))
+        return attrs
+
+    def create(self, validated_data):
+        obj = Projects.objects.create(
+            title=validated_data['title'],
+            description=validated_data['description'],
+            image=validated_data['image'],
+            location=validated_data['location'],
+            pro_user_id=validated_data['pro_user'].id,
+        )
+        obj.save()
+        return obj
+
+
+class ListProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Projects
+        fields = ['id', 'title', 'description', 'image', 'location']
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        data['created_by'] = Company.objects.all().values_list("pro_user__email", "pro_user__id")
+        return data
+
+
+class UpdateDeleteProjectSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(required=False)
+
+    class Meta:
+        model = Projects
+        fields = ['id', 'title', 'description', 'image', 'location']
+
+
+class CreateCompanySerializer(serializers.ModelSerializer):
+    name = serializers.CharField(required=True)
+    email = serializers.EmailField(required=False)
+    address = serializers.CharField(required=True)
+    logo = serializers.ImageField(required=False)
+    license_number = serializers.CharField(required=False)
+    about_us = serializers.CharField(required=False)
+    service_available_in = serializers.CharField(required=True)
+    worker_count = serializers.IntegerField(required=True)
+    completed_projects = serializers.IntegerField(required=True)
+    experience = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = Company
+        fields = ['name', 'email', 'address', 'logo', 'license_number', 'about_us', 'service_available_in',
+                                                                        'worker_count', 'completed_projects',
+                                                                        'experience', 'pro_user']
+
+    def validate(self, attrs):
+        if Company.objects.filter(name=attrs['name']).exists():
+            message = 'Company Already Exist'
+            raise serializers.ValidationError(_(message))
+        if not User.objects.filter(email=attrs['pro_user']).exists():
+            message = 'User Not Exist'
+            raise serializers.ValidationError(_(message))
+        return attrs
+
+
+class ListCompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = ['id', 'name', 'email', 'address', 'logo', 'license_number', 'about_us', 'service_available_in',
+                                                                              'worker_count', 'completed_projects',
+                                                                              'experience']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        data['created_by'] = Company.objects.all().values_list("pro_user__email", "pro_user__id")
+        return data
+
+
+class UpdateDeleteCompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = ['id', 'name', 'email', 'address', 'logo', 'license_number', 'about_us', 'service_available_in',
+                                                                              'worker_count', 'completed_projects',
+                                                                              'experience']
