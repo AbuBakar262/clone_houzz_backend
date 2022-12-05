@@ -210,7 +210,7 @@ class LoginView(viewsets.ModelViewSet):
                             "message": "Invalid email or password",
                             "data": ""
                         }, status=status.HTTP_400_BAD_REQUEST)
-            if username:
+            elif username:
                 user = User.objects.get(username=username)
                 if user:
                     if user.check_password(password):
@@ -221,6 +221,12 @@ class LoginView(viewsets.ModelViewSet):
                             "message": "Invalid username or password",
                             "data": ""
                         }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({
+                    "success": False,
+                    "message": "Invalid email or password",
+                    "data": ""
+                }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({
                 "success": False,

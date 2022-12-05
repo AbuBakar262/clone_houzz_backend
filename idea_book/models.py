@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from accounts.models import User
+
 
 class Tag(models.Model):
     name = models.CharField(_("name"), max_length=50, unique=True)
@@ -14,6 +16,7 @@ class Tag(models.Model):
 
 
 class IdeaBook(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='idea_book')
     title = models.CharField(_("title"), max_length=100)
     tag = models.ManyToManyField(Tag, related_name="idea_book", verbose_name=_("tag"))
     description = models.TextField(_("description"), null=True, blank=True)

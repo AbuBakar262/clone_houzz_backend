@@ -63,7 +63,7 @@ class Company(models.Model):
 
 
 class Projects(models.Model):
-    pro_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pro_user', limit_choices_to={'role': 'Professional'})
+    pro_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects', limit_choices_to={'role': 'Professional'})
     title = models.CharField(_("title"), max_length=50, null=True, blank=True)
     location = models.CharField(_("location"), max_length=50, null=True, blank=True)
     description = models.TextField(_("description"), max_length=50, null=True, blank=True)
