@@ -4,6 +4,15 @@ from django.utils.translation import gettext_lazy as _
 from accounts.models import User
 
 
+REVIEW_CHOICES = (
+    ("1", "1"),
+    ("2", "2"),
+    ("3", "3"),
+    ("4", "4"),
+    ("5", "5"),
+)
+
+
 class Tag(models.Model):
     name = models.CharField(_("name"), max_length=50, unique=True)
 
@@ -32,6 +41,7 @@ class FeedBack(models.Model):
     feedback_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user')
     feedback_on = models.ForeignKey(IdeaBook, on_delete=models.CASCADE, related_name='feedback')
     text = models.TextField(_("text"), null=True, blank=True)
+    review = models.CharField(_("review choices"), max_length=20, null=True, blank=True, choices=REVIEW_CHOICES)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
 
@@ -40,10 +50,7 @@ class FeedBack(models.Model):
 
 
 class Like(models.Model):
-    like_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='like_by')
-    like_on = models.ForeignKey(IdeaBook, on_delete=models.CASCADE, related_name='like_on')
+    liked_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='liked_by')
+    liked_on = models.ForeignKey(IdeaBook, on_delete=models.CASCADE, related_name='liked_on')
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
-
-    def __str__(self):
-        return self.like_by

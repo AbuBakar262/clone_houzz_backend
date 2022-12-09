@@ -51,13 +51,13 @@ class UpdateDeleteIdeaBookSerializer(serializers.ModelSerializer):
 class CreateFeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeedBack
-        fields = ['feedback_by', 'feedback_on', 'text', 'created_at', 'updated_at']
+        fields = ['feedback_by', 'feedback_on', 'text', 'review', 'created_at', 'updated_at']
 
 
 class ListFeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeedBack
-        fields = ['feedback_by', 'feedback_on', 'text']
+        fields = ['feedback_by', 'feedback_on', 'text', 'review']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -69,4 +69,4 @@ class ListFeedbackSerializer(serializers.ModelSerializer):
 class UpdateFeedBackSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeedBack
-        fields = ['text']
+        fields = ['text', 'review']
