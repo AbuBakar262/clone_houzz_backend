@@ -26,3 +26,24 @@ class IdeaBook(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class FeedBack(models.Model):
+    feedback_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user')
+    feedback_on = models.ForeignKey(IdeaBook, on_delete=models.CASCADE, related_name='feedback')
+    text = models.TextField(_("text"), null=True, blank=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+
+    def __str__(self):
+        return self.text
+
+
+class Like(models.Model):
+    like_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='like_by')
+    like_on = models.ForeignKey(IdeaBook, on_delete=models.CASCADE, related_name='like_on')
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+
+    def __str__(self):
+        return self.like_by

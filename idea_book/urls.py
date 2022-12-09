@@ -1,6 +1,7 @@
 from django.urls import path
 from idea_book.view.tag_views import CreateTagViewSet, ListTagViewSet, UpdateDeleteTagViewSet
 from idea_book.view.idea_book_views import CreateIdeaBookViewSet
+from idea_book.view.feedback_views import FeedBackViewSet
 
 urlpatterns = [
     #tag_views
@@ -14,4 +15,10 @@ urlpatterns = [
     path('list_ideas/', CreateIdeaBookViewSet.as_view({'get': 'list'}), name='list_idea'),
     path('delete_idea/<int:pk>/', CreateIdeaBookViewSet.as_view({'delete': 'destroy'}), name='delete_idea'),
     path('update_idea/<int:pk>/', UpdateDeleteTagViewSet.as_view({'put': 'update'}), name='update_idea'),
+
+    #feedback_views
+    path('create_feedback/', FeedBackViewSet.as_view({"post": "create"}), name='create_feedback'),
+    path('list_feedback/', FeedBackViewSet.as_view({'get': 'list'}), name='list_feedback'),
+    path('update_feedback/<int:pk>/', FeedBackViewSet.as_view({'put': 'update'}), name='update_feedback'),
+    path('delete_feedback/<int:pk>/', FeedBackViewSet.as_view({'delete': 'destroy'}), name='delete_feedback'),
 ]

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 
 from accounts.models import User
-from idea_book.models import IdeaBook, Tag
+from idea_book.models import IdeaBook, Tag, FeedBack
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -46,3 +46,27 @@ class UpdateDeleteIdeaBookSerializer(serializers.ModelSerializer):
     class Meta:
         model = IdeaBook
         fields = ["title", "tag", "images", "description"]
+
+
+class CreateFeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FeedBack
+        fields = ['feedback_by', 'feedback_on', 'text', 'created_at', 'updated_at']
+
+
+class ListFeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FeedBack
+        fields = ['feedback_by', 'feedback_on', 'text']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        user_id = User.objects.filter(id=instance.feedback_by.id)
+        data['feedback_by'] = user_id.prefetch_related().values_list("username", "email")
+        return data
+
+
+class UpdateFeedBackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FeedBack
+        fields = ['text']
