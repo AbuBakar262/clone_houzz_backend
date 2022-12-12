@@ -1,8 +1,6 @@
 from rest_framework import serializers
-from django.utils.translation import gettext_lazy as _
-
 from accounts.models import User
-from idea_book.models import IdeaBook, Tag, FeedBack
+from idea_book.models import IdeaBook, Tag, FeedBack, Like
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -70,3 +68,24 @@ class UpdateFeedBackSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeedBack
         fields = ['text', 'review']
+
+
+class CreateLikeSerializer(serializers.ModelSerializer):
+    liked = serializers.BooleanField(required=True)
+
+    class Meta:
+        model = Like
+        fields = ['liked_by', 'liked_on', 'liked']
+
+
+class ListLikeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Like
+        fields = ['liked_by']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        user_id = User.objects.filter(id=instance.liked_by.id)
+        data['liked_by'] = user_id.prefetch_related("like_user").values_list("email")
+        return data

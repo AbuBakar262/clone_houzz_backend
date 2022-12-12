@@ -2,6 +2,7 @@ from django.urls import path
 from idea_book.view.tag_views import CreateTagViewSet, ListTagViewSet, UpdateDeleteTagViewSet
 from idea_book.view.idea_book_views import CreateIdeaBookViewSet
 from idea_book.view.feedback_views import FeedBackViewSet
+from idea_book.view.liked_views import LikeViewSet
 
 urlpatterns = [
     #tag_views
@@ -21,4 +22,8 @@ urlpatterns = [
     path('list_feedback/', FeedBackViewSet.as_view({'get': 'list'}), name='list_feedback'),
     path('update_feedback/<int:pk>/', FeedBackViewSet.as_view({'put': 'update'}), name='update_feedback'),
     path('delete_feedback/<int:pk>/', FeedBackViewSet.as_view({'delete': 'destroy'}), name='delete_feedback'),
+
+    #like_views
+    path('create_like/', LikeViewSet.as_view({'post': 'create'}), name='create_like'),
+    path('list_idea_likes/', LikeViewSet.as_view({'get': 'list'}), name='list_idea_likes'),
 ]

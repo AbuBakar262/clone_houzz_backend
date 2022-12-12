@@ -50,7 +50,8 @@ class FeedBack(models.Model):
 
 
 class Like(models.Model):
-    liked_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='liked_by')
-    liked_on = models.ForeignKey(IdeaBook, on_delete=models.CASCADE, related_name='liked_on')
+    liked_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='like_user')
+    liked_on = models.ForeignKey(IdeaBook, on_delete=models.CASCADE, related_name='idea_book')
+    liked = models.BooleanField(_("liked"), default=False)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
