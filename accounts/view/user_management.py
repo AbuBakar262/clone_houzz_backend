@@ -1,89 +1,8 @@
 from import_modules import *
-from accounts.models import User
-from accounts.serializers import SignupSerializer, UserListSerializer, UpdateDeleteProSerializer, LoginSerializer, \
-    UpdateDeleteClientSerializer
+from accounts.models import User, OtpVerification
+from accounts.serializers import SignupSerializer, UserListSerializer, LoginSerializer, CreateProfileSerializer, \
+    EmailVerifySerializer, OtpSerializer, PhoneVerifySerializer
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
-
-
-def update_response(user, request):
-    if user.role == 'Professional':
-        serializer = UpdateDeleteProSerializer(user, data=request.data)
-        if not serializer.is_valid():
-            return Response({
-                "success": False,
-                "message": serializer.errors,
-                "data": ''
-            }, status=status.HTTP_400_BAD_REQUEST)
-        serializer.save()
-        return Response({
-            "success": True,
-            "message": "Professional User Updated Successfully",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
-    if user.role == 'Client':
-        serializer = UpdateDeleteClientSerializer(user, data=request.data)
-        if not serializer.is_valid():
-            return Response({
-                "success": False,
-                "message": serializer.errors,
-                "data": ''
-            }, status=status.HTTP_400_BAD_REQUEST)
-        serializer.save()
-        return Response({
-            "success": True,
-            "message": "Client User Updated Successfully",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
-
-
-def login_response(user):
-    if user is None:
-        return Response({
-            "success": False,
-            "message": "Username or Email is Invalid!",
-            "data": ""
-        }, status=status.HTTP_400_BAD_REQUEST)
-    if user.role == "Client":
-        return Response({
-            "success": True,
-            "message": "Client Logged in successfully",
-            "data": {
-                "access_token": str(AccessToken.for_user(user)),
-                "refresh_token": str(RefreshToken.for_user(user)),
-                "role": user.role,
-                "email": user.email,
-                "username": user.username
-            }
-        }, status=status.HTTP_200_OK)
-    elif user.role == 'Professional':
-        return Response({
-            "success": True,
-            "message": "Professional Logged in successfully",
-            "data": {
-                "access_token": str(AccessToken.for_user(user)),
-                "refresh_token": str(RefreshToken.for_user(user)),
-                "role": user.role,
-                "email": user.email,
-                "username": user.username
-            }
-        }, status=status.HTTP_200_OK)
-    elif user.is_superuser is True:
-        return Response({
-            "success": True,
-            "message": "Admin Logged in successfully",
-            "data": {
-                "access_token": str(AccessToken.for_user(user)),
-                "refresh_token": str(RefreshToken.for_user(user)),
-                "email": user.email,
-                "username": user.username
-            }
-        }, status=status.HTTP_200_OK)
-    else:
-        return Response({
-            "success": False,
-            "message": "Invalid email or password",
-            "data": ""
-        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DynamicPagination(pagination.PageNumberPagination):
@@ -164,22 +83,53 @@ class ClientUserListView(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UpdateDeleteUserView(viewsets.ModelViewSet):
+class CreateProfile(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     queryset = User.objects.all()
 
-    def put(self, request, *args, **kwargs):
+    def create_profile(self, request, *args, **kwargs):
         try:
-            instance = self.get_object()
-            return update_response(instance, request)
-        except Exception as e:
-            return Response(
-                {
-                    'success': False,
-                    'message': e.args[0],
-                    'data': "",
+            partial = kwargs.pop('partial', False)
+            user_id = kwargs.get('pk')
+            if not User.objects.filter(id=user_id).exists():
+                return Response({
+                    "success": False,
+                    "message": "User Not Found",
+                    "data": ""
                 }, status=status.HTTP_400_BAD_REQUEST)
+            instance = self.get_object()
+            serializer = CreateProfileSerializer(instance, data=request.data, partial=partial,
+                                                     context={'instance': instance})
+            if not serializer.is_valid():
+                return Response({
+                    "success": True,
+                    "message": serializer.errors,
+                    "data": ""
+                }, status=status.HTTP_400_BAD_REQUEST)
+            self.perform_update(serializer)
 
+            if getattr(instance, '_prefetched_objects_cache', None):
+                # If 'prefetch_related' has been applied to a queryset, we need to
+                # forcibly invalidate the prefetch cache on the instance.
+                instance._prefetched_objects_cache = {}
+            return Response({
+                "success": True,
+                "message": "Profile Created Successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": str(e),
+                "data": ""
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def perform_update(self, serializer):
+        serializer.save(create_profile=True, terms_conditions=True)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
 
 class LoginView(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
@@ -195,38 +145,126 @@ class LoginView(viewsets.ModelViewSet):
                     "message": serializer.errors,
                     "data": ""
                 }, status=status.HTTP_400_BAD_REQUEST)
-            email = serializer.validated_data.get("email")
-            username = serializer.validated_data.get("username")
-            password = serializer.validated_data.get("password")
-
-            if email:
-                user = User.objects.get(email=email)
-                if user:
-                    if user.check_password(password):
-                        return login_response(user)
-                    else:
-                        return Response({
-                            "success": False,
-                            "message": "Invalid email or password",
-                            "data": ""
-                        }, status=status.HTTP_400_BAD_REQUEST)
-            elif username:
-                user = User.objects.get(username=username)
-                if user:
-                    if user.check_password(password):
-                        return login_response(user)
-                    else:
-                        return Response({
-                            "success": False,
-                            "message": "Invalid username or password",
-                            "data": ""
-                        }, status=status.HTTP_400_BAD_REQUEST)
+            user_data = serializer.data
+            user = User.objects.get(email=user_data.get("email"))
+            if user.role == 'Client':
+                return Response({
+                    "success": True,
+                    "message": "Client Logged in successfully",
+                    "data": {
+                        "access_token": str(AccessToken.for_user(user)),
+                        "refresh_token": str(RefreshToken.for_user(user)),
+                        "role": user.role,
+                        "email": user.email,
+                        "username": user.username
+                    }
+                }, status=status.HTTP_200_OK)
+            elif user.role == 'Professional':
+                return Response({
+                    "success": True,
+                    "message": "Professional Logged in successfully",
+                    "data": {
+                        "access_token": str(AccessToken.for_user(user)),
+                        "refresh_token": str(RefreshToken.for_user(user)),
+                        "role": user.role,
+                        "email": user.email,
+                        "username": user.username
+                    }
+                }, status=status.HTTP_200_OK)
+            elif user.is_superuser is True:
+                return Response({
+                    "success": True,
+                    "message": "Admin Logged in successfully",
+                    "data": {
+                        "access_token": str(AccessToken.for_user(user)),
+                        "refresh_token": str(RefreshToken.for_user(user)),
+                        "email": user.email,
+                        "username": user.username
+                    }
+                }, status=status.HTTP_200_OK)
             else:
                 return Response({
                     "success": False,
                     "message": "Invalid email or password",
                     "data": ""
                 }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": str(e),
+                "data": ""
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class Verify(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def otp_email(self, request, *args, **kwargs):
+        try:
+            serializer = EmailVerifySerializer(data=request.data, context={'request': request})
+            if not serializer.is_valid():
+                return Response({
+                    "success": False,
+                    "message": serializer.errors,
+                    "data": ""
+                }, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response({
+                "success": True,
+                "message": "OTP is send to your email, Check Your Email and Verify OTP",
+                "data": ""
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": str(e),
+                "data": ""
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def otp_phone(self, request, *args, **kwargs):
+        try:
+            serializer = PhoneVerifySerializer(data=request.data, context={'request': request})
+            if not serializer.is_valid():
+                return Response({
+                    "success": False,
+                    "message": serializer.errors,
+                    "data": ""
+                }, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response({
+                "success": True,
+                "message": "OTP is send to your phone, Check Your Phone and Verify OTP",
+                "data": ""
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "message": str(e),
+                "data": ""
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+    def verify_otp(self, request, *args, **kwargs):
+        try:
+            serializer = OtpSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response({
+                    "success": False,
+                    "message": serializer.errors,
+                    "data": ""
+                }, status=status.HTTP_400_BAD_REQUEST)
+            otp = serializer.validated_data.get("otp")
+            verify_otp = OtpVerification.objects.get(otp=otp)
+            user = User.objects.filter(id=verify_otp.otp_user.id)
+            if verify_otp.email_verified is True:
+                user.update(email_verified=True)
+            user.update(phone_verified=True)
+            verify_otp.delete()
+            return Response({
+                "success": True,
+                "message": "OTP Verified Successfully",
+                "data": ""
+            }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
                 "success": False,

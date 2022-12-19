@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'accounts',
     'rest_framework',
     'idea_book',
+    'django_twilio',
 ]
 
 MIDDLEWARE = [
@@ -162,3 +163,18 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': datetime.timedelta(minutes=120),
     'SLIDING_TOKEN_REFRESH_LIFETIME': datetime.timedelta(days=365),
 }
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "rabubakar991@gmail.com"
+EMAIL_HOST_PASSWORD = "zohlncidfuamjrbz"
+
+
+TWILIO_DEFAULT_CALLERID = '+14092543785'
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+DJANGO_TWILIO_BLACKLIST_CHECK = True
+DJANGO_TWILIO_FORGERY_PROTECTION = False

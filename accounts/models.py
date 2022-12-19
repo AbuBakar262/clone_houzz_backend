@@ -18,10 +18,11 @@ GENDER_CHOICES = (
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    gender = models.CharField(_('gender choice'), max_length=25, choices=GENDER_CHOICES)
-    role = models.CharField(_('select role'), max_length=15, choices=ROLE_CHOICES)
-    username = models.CharField(_('username'), max_length=20, unique=True)
-    email = models.EmailField(_("email address"), max_length=25, unique=True)
+    gender = models.CharField(_('gender choice'), max_length=25, choices=GENDER_CHOICES, null=True, blank=True)
+    role = models.CharField(_('select role'), max_length=15, choices=ROLE_CHOICES, null=True, blank=True)
+    username = models.CharField(_('username'), max_length=15, unique=True, null=True, blank=True)
+    email = models.EmailField(_("email address"), max_length=30, unique=True)
+    create_profile = models.BooleanField(default=False)
     first_name = models.CharField(_("first name"), max_length=30, null=True, blank=True)
     last_name = models.CharField(_("last name"), max_length=30, null=True, blank=True)
     date_joined = models.DateTimeField(_("date joined"), auto_now_add=True)
@@ -29,20 +30,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(_("staff status"), default=False)
     phone_number = models.CharField(_("phone number"), unique=True, max_length=15, null=True, blank=True)
     terms_conditions = models.BooleanField(_("terms & conditions"), default=False)
-    profile_img = models.ImageField(_("profile pic"), upload_to=None, null=True, blank=True)
-    is_blocked = models.BooleanField(_("blocked"), default=False)
+    profile_pic = models.ImageField(_("profile pic"), upload_to=None, null=True, blank=True)
     home_address = models.CharField(_("home address"), max_length=50, null=True, blank=True)
     approved = models.BooleanField(_("approved"), default=False)
+    email_verified = models.BooleanField(_("email verified"), default=False)
+    phone_verified = models.BooleanField(_("phone verified"), default=False)
 
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['username']
 
 
 class Company(models.Model):
     pro_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='company', limit_choices_to={'role': 'Professional'})
-    email = models.EmailField(_("email address"), max_length=25, unique=True, null=True, blank=True)
+    email = models.EmailField(_("email address"), max_length=30, unique=True, null=True, blank=True)
     name = models.CharField(_("company name"), max_length=50, null=True, blank=True)
     address = models.CharField(_("company address"), max_length=50, null=True, blank=True)
     license_number = models.CharField(_("license number"), max_length=50, null=True, blank=True)
@@ -55,6 +57,7 @@ class Company(models.Model):
                                             blank=True)
     experience = models.CharField(_("experience"), max_length=50, null=True, blank=True)
     approved = models.BooleanField(_("approved"), default=False)
+    email_verified = models.BooleanField(_("email verified"), default=False)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
 
@@ -73,3 +76,13 @@ class Projects(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class OtpVerification(models.Model):
+    otp = models.IntegerField()
+    expiry = models.DateTimeField(null=True, blank=True)
+    email_verified = models.BooleanField(_("email verified"), default=False)
+    phone_verified = models.BooleanField(_("phone verified"), default=False)
+    otp_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="otp_user")
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
