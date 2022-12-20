@@ -406,4 +406,7 @@ class OtpSerializer(serializers.ModelSerializer):
             if otp.first().expiry < timezone.now():
                 message = 'OTP Expired'
                 raise serializers.ValidationError(_(message))
+        if not otp:
+            message = 'OTP is Incorrect'
+            raise serializers.ValidationError(_(message))
         return attrs
